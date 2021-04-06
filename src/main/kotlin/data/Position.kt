@@ -12,6 +12,15 @@ data class Position(val latitude: Double, val longitude: Double) {
         )
     }
 
+    private val latitudeIsValid
+        get() = -180.0 <= latitude && latitude <= 360.0
+
+    private val longitudeIsValid
+        get() = -90.0 <= longitude && longitude <= 90.0
+
+    val isValid
+        get() = latitudeIsValid && longitudeIsValid
+
     fun toJson() = JSONObject()
         .put("latitude", latitude)
         .put("longitude", longitude)

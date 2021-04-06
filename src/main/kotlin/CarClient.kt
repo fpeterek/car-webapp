@@ -1,5 +1,6 @@
 package cz.vsb.cs.democar.webapp
 
+import cz.vsb.cs.democar.webapp.conf.Config
 import cz.vsb.cs.democar.webapp.data.CarInfo
 import cz.vsb.cs.democar.webapp.data.Position
 import cz.vsb.cs.democar.webapp.data.Waypoint

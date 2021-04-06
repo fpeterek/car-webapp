@@ -1,29 +1,17 @@
 package cz.vsb.cs.democar.webapp
 
+import cz.vsb.cs.democar.webapp.conf.Config
 import io.ktor.application.*
-import io.ktor.http.*
 import io.ktor.http.content.*
-import io.ktor.response.*
+import io.ktor.request.*
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 
 
-// Should only be used internally with API.Response which only returns 200 or 500 or with 404 on invalid request
-private val Int.asStatus
-    get() = when (this) {
-        200 -> HttpStatusCode.OK
-        404 -> HttpStatusCode.NotFound
-        else -> HttpStatusCode.InternalServerError
-    }
-
-private suspend fun ApplicationCall.respondJson(data: String, status: Int) =
-    respondText(text=data, contentType=ContentType.Application.Json, status=status.asStatus)
-
-
 fun main() {
 
-    val conf = Config.default
+    val conf = Config.fromEnv
     val api = API(conf)
 
     embeddedServer(Netty, port=conf.webappPort) {
@@ -39,25 +27,27 @@ fun main() {
             }
             get("/info") {
                 val response = api.getInfo()
-                call.respondJson(response.data, response.code)
+                call.respond(response)
             }
             get("/position") {
                 val response = api.getPosition()
-                call.respondJson(response.data, response.code)
+                call.respond(response)
             }
             get("/heading") {
                 val response = api.getHeading()
-                call.respondJson(response.data, response.code)
+                call.respond(response)
             }
             get("/waypoints") {
                 val response = api.getWaypoints()
-                call.respondJson(response.data, response.code)
+                call.respond(response)
             }
             post("/waypoints") {
-
+                val response = api.postWaypoint(call.receiveText())
+                call.respond(response)
             }
             delete("/waypoints") {
-
+                val response = api.deleteWaypointNullable(call.request.queryParameters["id"])
+                call.respond(response)
             }
         }
     }.start(wait=true)
