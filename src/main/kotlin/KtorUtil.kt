@@ -6,7 +6,7 @@ import io.ktor.response.*
 
 
 suspend fun ApplicationCall.respondJson(data: String, status: HttpStatusCode) =
-    respondText(text=data, contentType= ContentType.Application.Json, status=status)
+    respondText(text=data, contentType=ContentType.Application.Json, status=status)
 
 suspend fun ApplicationCall.respond(response: API.Response) =
     respondJson(response.data, response.status)

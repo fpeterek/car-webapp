@@ -16,6 +16,7 @@ fun main() {
 
     embeddedServer(Netty, port=conf.webappPort) {
         routing {
+
             static {
                 defaultResource("index.html")
             }
@@ -25,6 +26,7 @@ fun main() {
             static("img") {
                 resources("img")
             }
+
             get("/info") {
                 val response = api.getInfo()
                 call.respond(response)
@@ -41,14 +43,17 @@ fun main() {
                 val response = api.getWaypoints()
                 call.respond(response)
             }
+
             post("/waypoints") {
                 val response = api.postWaypoint(call.receiveText())
                 call.respond(response)
             }
+
             delete("/waypoints") {
                 val response = api.deleteWaypointNullable(call.request.queryParameters["id"])
                 call.respond(response)
             }
+
         }
     }.start(wait=true)
 }
