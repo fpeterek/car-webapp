@@ -48,44 +48,49 @@ class CarClient(config: Config) {
     }
 
     fun getPosition(): Position? = getRequest("/position").let { resp ->
+        resp.use {
+            if (resp.unsuccessful) {
+                return null
+            }
 
-        if (resp.unsuccessful) {
-            return null
-        }
-
-        (resp.body()?.string() ?: "").let { body ->
-            when {
-                body.isBlank() -> null
-                else -> Position.fromJson(JSONObject(body))
+            (resp.body()?.string() ?: "").let { body ->
+                when {
+                    body.isBlank() -> null
+                    else -> Position.fromJson(JSONObject(body))
+                }
             }
         }
     }
 
     fun getWaypoints(): List<Waypoint>? = getRequest("/waypoints").let { resp ->
-        if (resp.unsuccessful) {
-            return null
-        }
+        resp.use {
+            if (resp.unsuccessful) {
+                return null
+            }
 
-        (resp.body()?.string() ?: "").let { body ->
-            when {
-                body.isBlank() -> null
-                else -> JSONArray(body).map { Waypoint.fromJson(it as JSONObject) }
+            (resp.body()?.string() ?: "").let { body ->
+                when {
+                    body.isBlank() -> null
+                    else -> JSONArray(body).map { Waypoint.fromJson(it as JSONObject) }
+                }
             }
         }
     }
 
     fun getDirection(): Double? = getRequest("/heading").let { resp ->
-        if (resp.unsuccessful) {
-            return null
-        }
+        resp.use {
+            if (resp.unsuccessful) {
+                return null
+            }
 
-        (resp.body()?.string() ?: "").let { body ->
-            when {
-                body.isBlank() -> null
-                else -> JSONObject(body).let {
-                    when {
-                        it.isNull("heading") -> null
-                        else -> it.getDouble("heading")
+            (resp.body()?.string() ?: "").let { body ->
+                when {
+                    body.isBlank() -> null
+                    else -> JSONObject(body).let {
+                        when {
+                            it.isNull("heading") -> null
+                            else -> it.getDouble("heading")
+                        }
                     }
                 }
             }
@@ -93,14 +98,16 @@ class CarClient(config: Config) {
     }
 
     fun getInfo(): CarInfo? = getRequest("/info").let { resp ->
-        if (resp.unsuccessful) {
-            return null
-        }
+        resp.use {
+            if (resp.unsuccessful) {
+                return null
+            }
 
-        (resp.body()?.string() ?: "").let { body ->
-            when {
-                body.isBlank() -> null
-                else -> CarInfo.fromJson(JSONObject(body))
+            (resp.body()?.string() ?: "").let { body ->
+                when {
+                    body.isBlank() -> null
+                    else -> CarInfo.fromJson(JSONObject(body))
+                }
             }
         }
     }

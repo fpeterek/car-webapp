@@ -38,12 +38,9 @@ function createMarker(sprite, id, position) {
     let marker = JAK.mel("div")
     let img = JAK.mel("img", {src: sprite})
     marker.appendChild(img)
+    let coords = SMap.Coords.fromWGS84(position.longitude, position.latitude)
 
-    return new SMap.Marker(
-        SMap.Coords.fromWGS84(position.longitude, position.latitude),
-        id,
-        {url: marker}
-    )
+    return new SMap.Marker(coords, id, {url: marker})
 }
 
 class Waypoint {
@@ -52,14 +49,14 @@ class Waypoint {
         this.id = jsonObject.id
     }
 
-    asMarker() { // TODO: Provide sprite
+    asMarker() {
         return createMarker("img/waypoint.png", this.id, this.position)
     }
 }
 
 class Car {
     constructor(jsonObject) {
-        this.direction = jsonObject.heading
+        this.direction = jsonObject.heading != null ? jsonObject.heading : 0
         this.position = new Position(jsonObject.position)
     }
 
@@ -68,7 +65,7 @@ class Car {
         dist = (dist <= 7) ? (-dist) : (15-dist)
 
         let sprite = (this.direction + dist) % 360
-        return 'img/' + sprite + '.png' // TODO: Provide sprites
+        return 'img/' + sprite + '.png'
     }
 
     asMarker() {
@@ -117,7 +114,7 @@ function handleInfoResponse(xhr) {
 function baseRequest(method, endpoint) {
     let xhr = new XMLHttpRequest()
     xhr.timeout = 500
-    xhr.open(method, "http://127.0.0.1:7478" + endpoint, true)
+    xhr.open(method, "http://127.0.0.1:7778" + endpoint, true)
     return xhr
 }
 
@@ -135,45 +132,34 @@ function createDeleteRequest(id) {
     return baseRequest("DELETE", "/waypoints?id=" + encodeURIComponent(id))
 }
 
-/*function createSearchRequest(term) {
-    let xhr = new XMLHttpRequest()
-    xhr.open("GET", "http://127.0.0.1:5050/search?term=" + encodeURIComponent(term), true)
-    xhr.timeout = 500
-    return xhr
+function applyGenericHandlers(xmlhttpreq) {
+    xmlhttpreq.ontimeout = function(e) {
+        console.log('Timeout while calling API')
+    }
+    xmlhttpreq.onerror = function(e) {
+        console.log('Failed to make call to server')
+    }
 }
 
-function handleSearchResponse(xhr) {
-    if (xhr.status !== 200) {
-        console.log("Server responded with " + xhr.status)
-        return
+function putWaypoint(lat, lon) {
+    let json = JSON.stringify({"position": {"latitude": lat, "longitude": lon}})
+    console.log("lat: " + lat + " lon: " + lon)
+    let req = createPostRequest()
+    req.onload = function() {
+        update()
     }
-    let resp = xhr.responseText
-
-    let parsed = JSON.parse(resp)
-
-    if (parsed.status === 'failure') {
-        console.log(parsed.reason)
-        return
-    }
-
-    console.log("Search response received")
+    applyGenericHandlers(req)
+    req.send(json)
 }
 
-function performSearch() {
-    console.log("Performing search")
-    let term = document.getElementById("sbox").value
-    let xhr = createSearchRequest(term)
-    xhr.onload = function() {
-        handleSearchResponse(xhr)
+function deleteWaypoint(id) {
+    let req = createDeleteRequest(id)
+    req.onload = function() {
+        update()
     }
-    xhr.ontimeout = function(e) {
-        console.log('Not found')
-    }
-    xhr.onerror = function(e) {
-        console.log('Not found')
-    }
-    xhr.send()
-}*/
+    applyGenericHandlers(req)
+    req.send()
+}
 
 function update() {
     let xhr = createInfoRequest()
@@ -181,12 +167,7 @@ function update() {
         handleInfoResponse(xhr)
         render()
     }
-    xhr.ontimeout = function(e) {
-        console.log('Timeout while calling API')
-    }
-    xhr.onerror = function(e) {
-        console.log('Failed to make call to server')
-    }
+    applyGenericHandlers(xhr)
     xhr.send()
 }
 
@@ -207,15 +188,13 @@ function initMap() {
     map.addControl(mouse)
 
     map.getSignals().addListener(this, "marker-click", function(e) {
-        let marker = e.target
-        /*let flight = marker.getId()
+        deleteWaypoint(e.target.getId())
+    })
 
-        for (let fl of flights) {
-            if (fl.number === flight) {
-                selected.flight = fl
-                render()
-            }
-        }*/
+    map.getSignals().addListener(this, "map-click", function(e, elm) {
+        let coords = SMap.Coords.fromEvent(e, map)
+        let lonlat = coords.toWGS84()
+        putWaypoint(lonlat[1], lonlat[0])
     })
 
     setInterval(update, 1000)

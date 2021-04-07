@@ -8,7 +8,7 @@ data class Waypoint(val position: Position, val id: Long = -1) {
     companion object {
         fun fromJson(json: JSONObject) = Waypoint(
             position = Position.fromJson(json.getJSONObject("position")),
-            id = json.getLong("id")
+            id = if (json.has("id")) { json.getLong("id") } else { -1 }
         )
     }
 
