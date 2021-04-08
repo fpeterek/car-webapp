@@ -112,8 +112,11 @@ class CarClient(config: Config) {
         }
     }
 
-    fun postWaypoint(waypoint: Waypoint) =
-        postRequest("/waypoints", waypoint.toString()).isSuccessful
+    fun postWaypoint(waypoint: Waypoint) = postRequest("/waypoints", waypoint.toString()).use {
+        it.isSuccessful
+    }
 
-    fun deleteWaypoint(id: Long) = deleteWaypointRequest(id).isSuccessful
+    fun deleteWaypoint(id: Long) = deleteWaypointRequest(id).use {
+        it.isSuccessful
+    }
 }

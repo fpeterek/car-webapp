@@ -1,6 +1,12 @@
 let map
 let markerLayer
 let mouse
+// When clicking on a marker, two events are created - marker-click and map-click
+// However, from those two events, we want to prefer marker-click and ignore the map-click
+// Otherwise, an old marker would be created and a new one would then immediately be placed
+// in place of the old marker. We want to avoid that, and for that, we disallow marker creation
+// immediately upon marker deletion using this flag
+let markerCreationEnabled = true
 
 let car = null
 let waypoints = []
@@ -40,7 +46,7 @@ function createMarker(sprite, id, position) {
     marker.appendChild(img)
     let coords = SMap.Coords.fromWGS84(position.longitude, position.latitude)
 
-    return new SMap.Marker(coords, id, {url: marker})
+    return new SMap.Marker(coords, id, { url: marker, anchor: { left: 16, bottom: 16 } })
 }
 
 class Waypoint {
@@ -69,7 +75,7 @@ class Car {
     }
 
     asMarker() {
-        return createMarker(this.sprite(), null, this.position)
+        return createMarker(this.sprite(), "car", this.position)
     }
 }
 
@@ -142,8 +148,7 @@ function applyGenericHandlers(xmlhttpreq) {
 }
 
 function putWaypoint(lat, lon) {
-    let json = JSON.stringify({"position": {"latitude": lat, "longitude": lon}})
-    console.log("lat: " + lat + " lon: " + lon)
+    let json = JSON.stringify({ "position": { "latitude": lat, "longitude": lon } })
     let req = createPostRequest()
     req.onload = function() {
         update()
@@ -181,17 +186,24 @@ function initMap() {
     map.addLayer(markerLayer)
     markerLayer.enable()
 
-    let sync = new SMap.Control.Sync({bottomSpace:100})
+    let sync = new SMap.Control.Sync({ bottomSpace: 100 })
     map.addControl(sync)
 
     mouse = new SMap.Control.Mouse(SMap.MOUSE_PAN | SMap.MOUSE_WHEEL | SMap.MOUSE_ZOOM)
     map.addControl(mouse)
 
     map.getSignals().addListener(this, "marker-click", function(e) {
-        deleteWaypoint(e.target.getId())
+        markerCreationEnabled = false
+        if (e.target.getId() !== "car") {
+            deleteWaypoint(e.target.getId())
+        }
     })
 
     map.getSignals().addListener(this, "map-click", function(e, elm) {
+        if (!markerCreationEnabled) {
+            markerCreationEnabled = true
+            return
+        }
         let coords = SMap.Coords.fromEvent(e.data.event, map)
         let lonlat = coords.toWGS84()
         putWaypoint(lonlat[1], lonlat[0])
