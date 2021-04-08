@@ -177,9 +177,9 @@ function update() {
 }
 
 function initMap() {
-    let center = SMap.Coords.fromWGS84(18.16, 49.83);
+    let center = SMap.Coords.fromWGS84(18.161855, 49.8332475);
 
-    map = new SMap(JAK.gel("mapa"), center, 10);
+    map = new SMap(JAK.gel("mapa"), center, 17);
     map.addDefaultLayer(SMap.DEF_BASE).enable();
     map.addDefaultControls();
     markerLayer = new SMap.Layer.Marker()
