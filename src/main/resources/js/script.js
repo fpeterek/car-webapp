@@ -192,7 +192,7 @@ function initMap() {
     })
 
     map.getSignals().addListener(this, "map-click", function(e, elm) {
-        let coords = SMap.Coords.fromEvent(e, map)
+        let coords = SMap.Coords.fromEvent(e.data.event, map)
         let lonlat = coords.toWGS84()
         putWaypoint(lonlat[1], lonlat[0])
     })
